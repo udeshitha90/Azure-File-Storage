@@ -1,0 +1,126 @@
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Auth;
+using Microsoft.WindowsAzure.Storage.File;
+using Azure.Storage.Files.Shares;
+using Azure.Storage.Files.Shares.Models;
+using Azure;
+using OfficeOpenXml;
+using Excel = Microsoft.Office.Interop.Excel;
+
+const string AzureStotageAccountName = "teesstt";
+const string AzureStotageAccountKey = "5555555555";
+
+
+            //file upload to azure
+            //Azureintigration
+            var AzureStorageAccount = new CloudStorageAccount(new StorageCredentials(AzureStotageAccountName, AzureStotageAccountKey), true);
+
+            // Create Azure file share
+            var fileshare = AzureStorageAccount.CreateCloudFileClient().GetShareReference("test");
+            fileshare.CreateIfNotExists();
+            var rootDIR = fileshare.GetRootDirectoryReference();
+            rootDIR.GetFileReference(excelFile.FileName);
+
+            string connectionString = "DefaultEndpointsProtocol=https;AccountName=saworeviewtest;AccountKey=;EndpointSuffix=core.windows.net";
+
+            // Name of the share, directory, and file we'll create
+            string shareName = "saworeviewtest";
+            string dirName = "Upload";
+            string fileName1 = file1.FileName;
+            string fileName2 = file2.FileName;
+            // Path to the local file to upload
+            string localFilePath = @"T:\";
+
+            // Get a reference to a share and then create it
+            ShareClient share = new ShareClient(connectionString, shareName);
+            share.CreateIfNotExists();
+
+            // Get a reference to a directory and create it
+            ShareDirectoryClient directory = share.GetDirectoryClient(dirName);
+            directory.CreateIfNotExists();
+
+            // Get a reference to a file and upload it
+            ShareFileClient files1 = directory.GetFileClient(fileName1);
+            ShareFileClient files2 = directory.GetFileClient(fileName2);
+
+            string results1 = new StreamReader(excelFile.InputStream).ReadToEnd();
+            string results2 = new StreamReader(excelFile1.InputStream).ReadToEnd();
+
+            using (Stream stream = excelFile.InputStream)
+            {
+                stream.Position = 0;
+
+                files1.Create(stream.Length);
+                files1.UploadRange(
+                    new HttpRange(0, stream.Length),
+                    stream);
+            }
+
+            using (Stream stream = excelFile1.InputStream)
+            {
+                stream.Position = 0;
+
+                files2.Create(stream.Length);
+                files2.UploadRange(
+                    new HttpRange(0, stream.Length),
+                    stream);
+            }
+
+            // Read file
+
+
+            // Name of the share, directory, and file we'll download from
+
+
+            // Path to the save the downloaded file
+            //string localFilePath = @"<path_to_local_file>";
+
+            // Get a reference to the file
+            //ShareClient share = new ShareClient(connectionString, shareName);
+            //ShareDirectoryClient directory = share.GetDirectoryClient(dirName);
+            ShareFileClient fileiw39 = directory.GetFileClient(fileName1);
+            ShareFileClient filemb = directory.GetFileClient(fileName2);
+
+            // Download the file
+            ShareFileDownloadInfo downloadmb = filemb.Download();
+            ShareFileDownloadInfo downloadiw39 = fileiw39.Download();
+
+            //using (FileStream stream = System.IO.File.OpenWrite(localFilePath))
+            //{
+            //    download.Content.CopyTo(stream);
+            //}
+            ExcelWorksheet worksheetmb = null;
+            ExcelWorksheet worksheetiw39 = null;
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            ExcelWorkbook wbworksheetmb = null;
+            ExcelWorkbook wbworksheetiw39 = null;
+
+            try
+            {
+                using (var stream = downloadmb.Content)
+                using (ExcelPackage package = new ExcelPackage(stream))
+                {
+                    //get the first worksheet in the workbook
+                    worksheetmb = package.Workbook.Worksheets.FirstOrDefault();
+                    wbworksheetmb = package.Workbook;
+                }
+
+                using (var stream = downloadiw39.Content)
+                using (ExcelPackage package = new ExcelPackage(stream))
+                {
+                    //get the first worksheet in the workbook
+                    worksheetiw39 = package.Workbook.Worksheets.FirstOrDefault();
+                    wbworksheetiw39 = package.Workbook;
+
+                }
+
+            }
+            catch (Exception e)
+            {
+
+                throw e;
+            }
+          
+
